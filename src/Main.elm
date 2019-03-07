@@ -6,7 +6,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Maybe
 import Url
-import Url.Parser as Parser exposing ((</>))
+import Url.Parser as Parser exposing ((</>), (<?>))
+import Url.Parser.Query as Query
 
 
 
@@ -42,7 +43,7 @@ init flags url key =
 type alias Model =
     { key : Nav.Key
     , url : Url.Url
-    , history : Maybe.Maybe Route
+    , history : Maybe Route
     }
 
 
@@ -61,13 +62,15 @@ update msg model =
         LinkClicked urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    ( model
+                    , Nav.pushUrl model.key (Url.toString url)
+                    )
 
                 Browser.External href ->
                     ( model, Nav.load href )
 
         UrlChanged url ->
-            ( { model | url = url }
+            ( { model | url = url, history = Parser.parse routeParser url }
             , Cmd.none
             )
 
@@ -86,13 +89,15 @@ subscriptions _ =
 
 
 type Route
-    = Topic String
+    = TopicQuery (Maybe String)
+    | Topic
 
 
 routeParser : Parser.Parser (Route -> a) a
 routeParser =
     Parser.oneOf
-        [ Parser.map Topic (Parser.s "topic" </> Parser.string)
+        [ Parser.map Topic (Parser.s "topic")
+        , Parser.map TopicQuery (Parser.s "topic" <?> Query.string "q")
         ]
 
 
