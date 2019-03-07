@@ -67,7 +67,9 @@ update msg model =
                     )
 
                 Browser.External href ->
-                    ( model, Nav.load href )
+                    ( model
+                    , Nav.load href
+                    )
 
         UrlChanged url ->
             ( { model | url = url, history = Parser.parse routeParser url }
